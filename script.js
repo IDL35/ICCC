@@ -1,5 +1,6 @@
 let department = localStorage.getItem("department");
 let currentLang = localStorage.getItem("lang") || 'uk';
+let isStudent = localStorage.getItem("isStudent") === "true";
 
 const translations = {
   uk: {
@@ -12,6 +13,7 @@ const translations = {
     calculate: "Обчислити", weeklyYield: "Тижнева Видайність (%)",
     monthlySalary: "Місячний оклад", date: "Дата", hours: "Години", percent: "%", x: "X",
     add: "Додати +", delete: "Видалити", export: "Експорт ⬇️",
+    student: "Студент",
     errorHours: 'Помилка: години > 0',
     lowProd: 'як тебе ще не звільнили',
     midProd: 'Хаха, лох',
@@ -31,6 +33,7 @@ const translations = {
     calculate: "Calculate", weeklyYield: "Weekly Yield (%)",
     monthlySalary: "Monthly Salary", date: "Date", hours: "Hours", percent: "%", x: "X",
     add: "Add +", delete: "Delete", export: "Export ⬇️",
+    student: "Student",
     errorHours: 'Error: hours > 0',
     lowProd: 'How are you not fired yet?',
     midProd: 'Haha, loser',
@@ -50,6 +53,7 @@ const translations = {
     calculate: "Oblicz", weeklyYield: "Wydajność tygodniowa (%)",
     monthlySalary: "Wynagrodzenie miesięczne", date: "Data", hours: "Godziny", percent: "%", x: "X",
     add: "Dodaj +", delete: "Usuń", export: "Eksport ⬇️",
+    student: "Student",
     errorHours: 'Błąd: godziny > 0',
     lowProd: 'Jak cię jeszcze nie zwolnili?',
     midProd: 'Haha, frajer',
@@ -78,11 +82,29 @@ document.querySelectorAll(".language-switcher button").forEach(btn=>{
 
 const standards = {
   stock: {cartons:150, chemistry:123, rollers:110, market:110, boxing:31},
-  cross: {cartons:132, market:100, zam:11, stands:11, localization:30},
+  cross: {cartons:123, market:100, zam:11, stands:11, localization:30},
   fresh: {meat:140, nabyal:190, vazhiva:170, piking:112}
 };
 
-const ratesByDepartment = {
+const ratesNormal = {
+  stock: [
+    {min:140, rate:41.34},{min:135, rate:39.97},{min:130, rate:37.79},{min:125, rate:36.02},
+    {min:120, rate:34.23},{min:115, rate:32.47},{min:110, rate:30.69},{min:105, rate:28.91},
+    {min:100, rate:27.14},{min:0, rate:25.36}
+  ],
+  cross: [
+    {min:140, rate:32.62},{min:135, rate:31.81},{min:130, rate:31.0},{min:125, rate:30.20},
+    {min:120, rate:29.39},{min:115, rate:28.58},{min:110, rate:27.77},{min:105, rate:26.97},
+    {min:100, rate:26.16},{min:0, rate:25.36}
+  ],
+  fresh: [
+    {min:140, rate:32.62},{min:135, rate:31.81},{min:130, rate:31.0},{min:125, rate:30.20},
+    {min:120, rate:29.39},{min:115, rate:28.58},{min:110, rate:27.77},{min:105, rate:26.97},
+    {min:100, rate:26.16},{min:0, rate:25.36}
+  ]
+};
+
+const ratesStudent = {
   stock: [
     {min:140, rate:51.2},{min:135, rate:49.0},{min:130, rate:46.8},{min:125, rate:44.6},
     {min:120, rate:42.4},{min:115, rate:40.2},{min:110, rate:38.0},{min:105, rate:35.8},
@@ -108,6 +130,9 @@ function init(){
   if(!department){ document.getElementById("departmentSelect").style.display = "block"; }
   else startApp();
   setLanguage(currentLang);
+
+  const st = document.getElementById("studentToggle");
+  if(st){ st.checked = isStudent; st.onchange = () => { isStudent = st.checked; localStorage.setItem("isStudent", isStudent); calculateSummaries(); };}
 }
 
 function selectDepartment(dep){ 
@@ -209,9 +234,14 @@ function clearData(){
   }
 }
 
-function getRate(p){
-  const table = ratesByDepartment[department];
-  for(const row of table){if(p>=row.min) return row.rate;}
+function getRate(percent){
+  const table = isStudent
+    ? ratesStudent[department]
+    : ratesNormal[department];
+
+  for(const row of table){
+    if(percent >= row.min) return row.rate;
+  }
   return 0;
 }
 
